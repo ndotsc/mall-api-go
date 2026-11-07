@@ -1,0 +1,7 @@
+.env
+/bin/
+/mall-api-go
+*.log
+public/uploads/*
+!public/uploads/.gitkeep
+.DS_Store
