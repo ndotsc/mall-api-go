@@ -126,7 +126,14 @@ func CORS(origins string) gin.HandlerFunc {
 // BodyLimit：1MB（对应 Node 版 app.js 的 express.json({limit:'1mb'})）
 func BodyLimit() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 1<<20)
+		// JSON 请求体 1MB（对齐 Node 版 express.json({limit:'1mb'})）；
+		// multipart 是图片上传，单文件上限 2MB，另留 64KB 给 multipart 边界等开销，
+		// 否则 1MB 限制会让 1~2MB 的图片直接上传失败。
+		limit := int64(1 << 20)
+		if strings.Contains(strings.ToLower(c.ContentType()), "multipart/form-data") {
+			limit = 2<<20 + 64<<10
+		}
+		c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, limit)
 		c.Next()
 	}
 }

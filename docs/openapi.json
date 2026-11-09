@@ -3,7 +3,7 @@
   "info": {
     "title": "mall-api 接口文档",
     "version": "1.0.0",
-    "description": "小型商城后端：商品 / 文章 / 分类 / 订单 / 鉴权 / 上传。\n\n## 全局约定\n- **基础路径**：所有接口以 `/api` 开头（如 `/api/products`）。\n- **统一响应信封**：`{ \"code\": 0, \"message\": \"ok\", \"data\": ... }`；业务错误时 `code` 同 HTTP 状态码（400/401/403/404…），`message` 为错误描述。\n- **鉴权**：需登录的接口在请求头带 `Authorization: Bearer <token>`；标注「公开」的无需鉴权。\n- **金额单位**：所有 `price` / `totalAmount` 等金额字段单位均为**分**，前端展示请 ÷100（如 9900 分 = ¥99.00）。\n- **分页**：列表接口统一支持 `page` / `pageSize`（上限见各接口），返回 `{ list, total, page, pageSize }`。"
+    "description": "小型商城后端：商品 / 文章 / 分类 / 订单 / 鉴权 / 上传。\n\n## 全局约定\n- **基础路径**：所有接口以 `/api` 开头（如 `/api/products`）。\n- **统一响应信封**：`{ \"code\": 0, \"message\": \"ok\", \"data\": ... }`；业务错误时 `code` 同 HTTP 状态码（400/401/403/404…），`message` 为错误描述。\n- **鉴权**：需登录的接口在请求头带 `Authorization: Bearer <token>`；标注「公开」的无需鉴权。\n- **金额单位**：所有 `price` / `totalAmount` 等金额字段单位均为**分**，前端展示请 ÷100（如 9900 分 = ¥99.00）。\n- **分页**：列表接口统一支持 `page` / `pageSize`（上限见各接口），返回 `{ list, total, page, pageSize }`。\n- **图片 URL**：`cover` / `avatar` / 上传接口返回的 `url` 一律是**完整 URL**（如 `https://api.example.com/uploads/xxx.png`），前端可直接用于 `<img src>`，跨域部署无需再配 vite proxy。数据库里仍只存相对路径 `/uploads/xxx.png`；写接口同时接受相对路径和完整 URL。完整 URL 的 origin 由 `PUBLIC_ORIGIN` 指定（留空按请求推导），静态目录由 `UPLOAD_DIR` 指定。"
   },
   "servers": [
     {
@@ -82,7 +82,7 @@
           "cover": {
             "type": "string",
             "nullable": true,
-            "example": "/uploads/xxx.jpg",
+            "example": "https://api.example.com/uploads/xxx.jpg",
             "description": "封面图 URL"
           },
           "summary": {
@@ -199,7 +199,7 @@
               "cover": {
                 "type": "string",
                 "nullable": true,
-                "example": "/uploads/xxx.jpg"
+                "example": "https://api.example.com/uploads/xxx.jpg"
               }
             }
           }
@@ -1254,7 +1254,7 @@
         },
         "responses": {
           "200": {
-            "description": "{ url: \"/uploads/文件名\" }"
+            "description": "{ url: \"https://api.example.com/uploads/文件名\" }（完整 URL；库里存相对路径）"
           },
           "400": {
             "description": "未收到文件 / 仅支持 jpg png gif webp / 超出 2MB"

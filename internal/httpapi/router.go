@@ -7,11 +7,15 @@ import (
 // NewRouter：与 Node 版 src/routes/index.js 的挂载结构一一对应。
 // 全部挂在 /api 下；静态路由（check / mine / me）必须注册在参数路由之前，避免被 :id 抢先匹配。
 func NewRouter(d *Deps) *gin.Engine {
+	// 图片完整 URL 的对外 origin（生产用 PUBLIC_ORIGIN，留空则按请求头推导）
+	setAssetOrigin(d.Cfg.PublicOrigin)
+
 	r := gin.New()
-	r.Use(Recovery(), BodyLimit(), CORS(d.Cfg.CORSOrigins))
+	// NormalizeAssetBody 放在 BodyLimit 之后：先用 1MB 限制包住 body，再做入参归一化。
+	r.Use(Recovery(), BodyLimit(), CORS(d.Cfg.CORSOrigins), NormalizeAssetBody())
 	r.NoRoute(NoRoute)
 
-	// 上传的静态文件：/uploads/xxx
+	// 上传的静态文件：/uploads/xxx（三套后端共用同一目录，见 backend/README.md）
 	r.Static("/uploads", d.Cfg.UploadDir)
 
 	api := r.Group("/api")

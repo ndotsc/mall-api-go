@@ -9,13 +9,17 @@
 
 ---
 
-## 1. 启动命令（在你本机执行）
+## 1. 启动命令（本机直跑，不用 Docker）
+
+> **完整步骤、验证命令和排错表统一放在 [`deploy.md`](deploy.md)。** 这里只给最快路径。
+
+`.env` 已生成好（权限 600、被 `.gitignore` 忽略），`DATABASE_URL` / `JWT_SECRET`
+与 `../mall-api/.env` 一致，**不用再 `cp` 或手填**；丢了才 `cp .env.example .env` 重新对齐。
 
 ```bash
 cd backend/mall-api-go
 
-go mod tidy                 # 下载依赖、生成 go.sum（首次执行）
-cp .env.example .env        # 编辑：DATABASE_URL 指向同一个 mall 库，JWT_SECRET 与 Node 版完全一致
+go mod tidy                 # 下载依赖、生成 go.sum（首次执行 / 改过 go.mod 时）
 go run .                    # 开发启动 :3002
 go build -o bin/mall-api-go .   # 生产构建出单文件二进制
 ./bin/mall-api-go
@@ -48,12 +52,15 @@ curl "http://localhost:3002/api/products?page=1&pageSize=5"
 | `CORS_ORIGINS` | `*` | 逗号分隔的前端域名 |
 | `WX_APPID` / `WX_SECRET` | 空 | 小程序/App 微信登录 |
 | `WX_OA_APPID` / `WX_OA_SECRET` | 空 | 公众号网页授权（缺省回退上面的凭证） |
-| `UPLOAD_DIR` | `public/uploads` | 上传目录 |
+| `UPLOAD_DIR` | `../uploads` | 上传/静态图片目录，与 Node/PHP 共用 `backend/uploads` |
+| `PUBLIC_ORIGIN` | 空 | 接口返回图片完整 URL 时用的对外 origin（如 `https://api.example.com` 或 CDN）。留空按当前请求推导（本地 `http://localhost:3002`）；生产/反代必配，真机调试填局域网 IP |
 | `APP_ENV` | 空 | 设为 `test` 跳过登录限流 |
 
 ## 3. 目录结构
 
 ```
+deploy.md                        ★ 本机直跑步骤、验证、令牌互认、排错
+.env / .env.example              实际配置（不入库）/ 示例配置
 main.go                          启动入口（连接池单例 → 装配依赖 → 注册路由）
 internal/config/config.go        .env 读取、DATABASE_URL→DSN 转换
 internal/db/db.go                sqlx 连接池
@@ -63,8 +70,9 @@ internal/service/blacklist.go    注销 jti 黑名单（内存 + TTL）
 internal/service/coupon.go       折扣算法 + 券文案（与 Node 版逐字一致）
 internal/service/password.go     bcrypt
 internal/service/wechat.go       微信 code2Session / 网页授权
-internal/httpapi/response.go     统一响应信封 + ApiError + Wrap
-internal/httpapi/middleware.go   JWT / 管理员 / 限流 / CORS / 1MB 限制 / Recovery / 404
+internal/httpapi/response.go     统一响应信封 + ApiError + Wrap + 图片完整 URL 归一化
+internal/httpapi/asset_url.go    ★ 图片 URL 契约：响应补 origin、请求体还原相对路径
+internal/httpapi/middleware.go   JWT / 管理员 / 限流 / CORS / 请求体限制 / Recovery / 404
 internal/httpapi/router.go       全部路由（46 条）
 internal/httpapi/handlers_*.go  按模块分组的业务实现
 docs/openapi.json                OpenAPI 契约（//go:embed 进二进制，运行时不依赖外部文件）
@@ -96,6 +104,11 @@ docs/openapi.json                OpenAPI 契约（//go:embed 进二进制，运�
 共 **43 个业务端点 + 1 个健康检查 + 2 个文档端点 = 46 条路由**（已与 Node 版、PHP 版逐条核对一致）。
 统一响应：成功 `{code:0,message:"ok",data:...}`，
 失败 `{code:<HTTP状态码>,message:"...",data:null}`。
+
+**图片 URL**：`cover` / `avatar` / 上传接口返回的 `url` 都是**完整 URL**，前端可直接用于
+`<img src>`，跨域部署不必再靠 vite proxy；库里仍只存 `/uploads/xxx.png`。
+origin 由 `PUBLIC_ORIGIN` 指定，留空按请求推导；静态文件由 `UPLOAD_DIR` 指向三后端共用的
+`backend/uploads`。完整契约见 [`../README.md`](../README.md)。
 
 ## 5. 与 Node 版的已知差异
 

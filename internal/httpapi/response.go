@@ -17,7 +17,8 @@ type Envelope struct {
 }
 
 func OK(c *gin.Context, data any) {
-	c.JSON(http.StatusOK, Envelope{Code: 0, Message: "ok", Data: data})
+	// 统一在响应出口把 `/uploads/xxx` 补成完整 URL（契约见 asset_url.go）。
+	c.JSON(http.StatusOK, Envelope{Code: 0, Message: "ok", Data: absolutize(data, publicOrigin(c))})
 }
 
 func Fail(c *gin.Context, status int, message string) {

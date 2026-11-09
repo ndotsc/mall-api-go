@@ -23,7 +23,8 @@ type Config struct {
 	WXSecret       string
 	WXOAAppID      string
 	WXOASecret     string
-	UploadDir      string
+	UploadDir      string // 静态图片目录；三套后端共用 ../uploads
+	PublicOrigin   string // 对外可访问的 origin，如 https://api.example.com 或 CDN；留空按请求推导
 }
 
 func get(key, def string) string {
@@ -57,6 +58,7 @@ func Load() Config {
 		WXOAAppID:      get("WX_OA_APPID", ""),
 		WXOASecret:     get("WX_OA_SECRET", ""),
 		UploadDir:      get("UPLOAD_DIR", "public/uploads"),
+		PublicOrigin:   get("PUBLIC_ORIGIN", ""),
 	}
 	c.DSN = buildDSN(get("DATABASE_URL", "mysql://mall:mall123@localhost:3306/mall"))
 	return c
