@@ -4,6 +4,8 @@
 **接口 100% 兼容**、**复用同一个 MySQL 库**：前端 `mall-app` / `mall-web` 只要把
 `VITE_API_BASE` 改成 `http://localhost:3002/api` 就能切换，代码一行不用改。
 
+> 作品集总览：[mall-web/PORTFOLIO.md](https://github.com/ndotsc/mall-web/blob/main/PORTFOLIO.md)（代码仓库链接，未联网验证；非部署地址）。本服务是三套兼容后端中的 Go / Gin 版，监听 3002，按约定本机 `go run .` 直跑、不套 Docker。
+
 > 三套实现平级放在 `backend/` 下：`mall-api`(Node:3000) / `mall-api-php`(Laravel:3001) / `mall-api-go`(Gin:3002)。
 > 全局约定见 [`../README.md`](../README.md)。本服务**不建表、不迁移**，表由 `mall-api` 的 Prisma 迁移创建。
 
